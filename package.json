@@ -1,0 +1,14 @@
+{
+  "name": "backend_zoo",
+  "version": "1.0.0",
+  "description": "Including data query APIs from MySQL and other logic processors.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "zoo"
+  ],
+  "author": "Vu Do",
+  "license": "ISC"
+}
