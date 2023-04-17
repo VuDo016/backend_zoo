@@ -17,13 +17,16 @@ app.use(bodyParser.json());
 app.use(morgan('combined'));
 
 // Router
-const zooInfoRouter = require('./routes/zooInfoRouter');
-app.use('/api/zoo-info', zooInfoRouter);
+const serviceRouter = require('./routes/serviceRouter')
+const animalRouter = require('./routes/animalRouter')
+app.use('/api/service', serviceRouter);
+app.use('/api/animal', animalRouter);
 
 // Start server
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+const host = '0.0.0.0'; // cấu hình để lắng nghe trên tất cả các địa chỉ IP
+app.listen(port, host, () => {
+  console.log(`Server is listening on ${host}:${port}`);
 });
 
 // Handle database errors
