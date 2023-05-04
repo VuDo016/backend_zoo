@@ -19,8 +19,10 @@ app.use(morgan('combined'));
 // Router
 const serviceRouter = require('./routes/serviceRouter')
 const animalRouter = require('./routes/animalRouter')
+const accountRouter = require('./routes/accountRouter')
 app.use('/api/service', serviceRouter);
 app.use('/api/animal', animalRouter);
+app.use('/api/account', accountRouter);
 
 // Start server
 const port = process.env.PORT || 3000;
