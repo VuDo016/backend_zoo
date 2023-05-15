@@ -17,6 +17,11 @@ const getAllUser = async (req, res, next) => {
 const createEmployer = async (req, res, next) => {
     try {
         const { email, password, name } = req.body;
+
+        if (email === "" || password === "" || name === "") {
+            return res.status(401).json({ message: "Vui lòng nhập đủ tt !!!!" });
+        }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json({ message: "Email không hợp lệ" });
@@ -28,6 +33,7 @@ const createEmployer = async (req, res, next) => {
                 .status(400)
                 .json({ message: "Mật khẩu phải có ít nhất 8 ký tự" });
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const sql = 'INSERT INTO employer (email, password, name) VALUES (?, ?, ?)';
         const values = [email, hashedPassword, name];
