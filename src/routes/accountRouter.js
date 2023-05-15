@@ -31,7 +31,7 @@ router.post('/login', getAllUser, async (req, res) => {
 })
 
 router.post('/register', createEmployer, (req, res) => {
-	res.sendStatus(201);
+	res.status(200).json({ message: "Tạo tài khoản thành công !" });
 })
 
 router.post('/token', getAllUser, async (req, res) => {
