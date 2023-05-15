@@ -47,26 +47,43 @@ router.post("/:id", upload.array("images"), async (req, res) => {
             urls.push(url);
         }
 
-        upImagetoDB(urls, animalId, req, res)
+        // Xóa các file trong thư mục "uploads"
+        const fs = require("fs");
+        const uploadDir = "uploads/";
+
+        fs.readdir(uploadDir, (err, files) => {
+            if (err) {
+                console.error("Error reading upload directory:", err);
+                return res.status(500).json({ error: "Something went wrong" });
+            }
+
+            // Lặp qua từng tệp tin
+            const deletePromises = files.map((file) => {
+                return new Promise((resolve, reject) => {
+                    fs.unlink(uploadDir + file, (err) => {
+                        if (err) {
+                            console.error("Error deleting file:", err);
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+            });
+
+            // Đợi tất cả các promise xóa tệp tin hoàn thành
+            Promise.all(deletePromises)
+                .then(() => {
+                    upImagetoDB(urls, animalId, req, res);
+                })
+                .catch((error) => {
+                    console.error("Error deleting files:", error);
+                    res.status(500).json({ error: "Something went wrong" });
+                });
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Something went wrong" });
-    }
-});
-
-router.delete('/:id', async (req, res) => {
-    try {
-        const animalId = req.params.id;
-
-        // Xóa tất cả các ảnh có url tương ứng trên Storage Firebase
-        const urls = await deleteImage(animalId, req, res)
-        const bucket = admin.storage().bucket();
-        await Promise.all(urls.map(url => bucket.file(extractFileNameFromUrl(url)).delete()));
-
-        res.sendStatus(204);
-    } catch (error) {
-        console.log(error);
-        res.sendStatus(500);
     }
 });
 

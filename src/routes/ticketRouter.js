@@ -1,6 +1,7 @@
 const express = require('express');
 const qrcode = require('qrcode');
 const router = express.Router();
+const { addService, addTicketHistory, addTicket, getTicketHistoryData } = require('../controllers/ticketController');
 
 router.post('/generate-qr-code', (req, res) => {
   const paymentData = req.body.paymentData; // Lấy thông tin thanh toán từ yêu cầu của khách hàng
@@ -16,6 +17,20 @@ router.post('/generate-qr-code', (req, res) => {
     }
   });
 });
+
+//Lay created_date theo mui gio VN
+// SELECT id, CONVERT_TZ(created_at, '+00:00', '+07:00') AS created_at_hanoi
+// FROM ticket_history;
+
+
+router.post('/bill', addTicketHistory);
+router.get('/bill', getTicketHistoryData);
+
+router.post('/service', addService);
+
+router.post('/ticket', addTicket);
+
+
 
 module.exports = router;
 

@@ -7,22 +7,27 @@ const { generateTokens, updateRefreshToken, verifyToken, getAllUser, createEmplo
 
 router.post('/login', getAllUser, async (req, res) => {
 	const { email, password } = req.body;
-	const users = req.user;
+	if (email === "" || password === "") {
+		res.status(401).json({ message: "Vui lòng nhập đủ tt !!!!" });
+	}
+	else {
+		const users = req.user;
 
-	for (const user of users) {
-		if (user.email === email) {
-			const isPasswordMatch = await bcrypt.compare(password, user.password);
-			if (isPasswordMatch) {				
-				const user = req.user.find(user => user.email === email)
-				if (!user) return res.sendStatus(401)
+		for (const user of users) {
+			if (user.email === email) {
+				const isPasswordMatch = await bcrypt.compare(password, user.password);
+				if (isPasswordMatch) {
+					const user = req.user.find(user => user.email === email)
+					if (!user) return res.sendStatus(401)
 
-				const tokens = generateTokens(user)
-				await updateRefreshToken(req, res, email, tokens.refreshToken)
-				res.status(200).json({ message: "Đăng nhập thành công", tokens: tokens });
+					const tokens = generateTokens(user)
+					await updateRefreshToken(req, res, email, tokens.refreshToken)
+					res.status(200).json({ message: "Đăng nhập thành công", tokens: tokens });
+				}
 			}
 		}
+		res.status(401).json({ message: "Email hoặc mật khẩu không đúng" });
 	}
-	res.status(401).json({ message: "Email hoặc mật khẩu không đúng" });
 })
 
 router.post('/register', createEmployer, (req, res) => {
