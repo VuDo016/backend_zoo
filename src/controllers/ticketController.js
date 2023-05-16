@@ -132,6 +132,34 @@ const getTicketHistoryData = async (req, res) => {
       console.log(error);
       res.sendStatus(500);
     }
-  };  
+  }; 
+  
+  ////////////////////////
 
-module.exports = { addTicket, addService, addTicketHistory, getTicketHistoryData };
+  const getAllTicketCategories = async (req, res) => {
+    try {
+      const sql = 'SELECT * FROM ticket_category';
+      const [rows] = await req.pool.query(sql);
+      const result = { ticketCategories: rows };
+      res.json(result);
+    } catch (error) {
+      console.log(error);
+      res.sendStatus(500);
+    }
+  };
+
+  const getAllServiceCategories = async (req, res) => {
+    try {
+        const [vehicleRows] = await req.pool.query('SELECT * FROM service_category WHERE type = 1');
+        const [boatingRows] = await req.pool.query('SELECT * FROM service_category WHERE type = 2');
+        const [tentRows] = await req.pool.query('SELECT * FROM service_category WHERE type = 3');
+        const result = { vehicleTickets: vehicleRows, boatingTickets: boatingRows, tentRentals: tentRows };
+        res.json(result);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+};
+
+module.exports = { addTicket, addService, addTicketHistory, 
+  getTicketHistoryData, getAllTicketCategories, getAllServiceCategories };

@@ -1,7 +1,8 @@
 const express = require('express');
 const qrcode = require('qrcode');
 const router = express.Router();
-const { addService, addTicketHistory, addTicket, getTicketHistoryData } = require('../controllers/ticketController');
+const { addService, addTicketHistory, addTicket, 
+  getTicketHistoryData, getAllTicketCategories, getAllServiceCategories } = require('../controllers/ticketController');
 
 router.post('/generate-qr-code', (req, res) => {
   const paymentData = req.body.paymentData; // Lấy thông tin thanh toán từ yêu cầu của khách hàng
@@ -27,8 +28,10 @@ router.post('/bill', addTicketHistory);
 router.get('/bill', getTicketHistoryData);
 
 router.post('/service', addService);
+router.get('/service', getAllServiceCategories);
 
 router.post('/ticket', addTicket);
+router.get('/ticket', getAllTicketCategories);
 
 
 

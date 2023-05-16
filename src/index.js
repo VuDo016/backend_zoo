@@ -98,14 +98,12 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Router
-const serviceRouter = require('./routes/serviceRouter')
 const animalRouter = require('./routes/animalRouter')
 const accountRouter = require('./routes/accountRouter')
 const listImgRouter = require('./routes/listImgRouter')
 const ticketRouter = require('./routes/ticketRouter')
 const paymentRouter = require('./routes/paymentRouter')
 
-app.use('/api/service', serviceRouter);
 app.use('/api/animal', animalRouter);
 app.use('/api/account', accountRouter);
 app.use('/api/images', listImgRouter);
