@@ -64,6 +64,8 @@ const addTicket = async (req, res) => {
     }
 };
 
+/////////////////////////
+
 const getTicketHistoryData = async (req, res) => {
     try {
       const sql = `
