@@ -10,7 +10,7 @@ const request = require('request');
 const moment = require('moment');
 
 
-router.get('/', function (req, res, next) { 
+router.get('/', function (req, res, next) {
     res.render('orderlist', { title: 'Danh sách đơn hàng' })
 });
 
@@ -32,7 +32,7 @@ router.get('/refund', function (req, res, next) {
 });
 
 
-router.post('/create_payment_url', function (req, res, next) {
+router.post('/create_payment_url/:totalPrice', function (req, res, next) {
 
     process.env.TZ = 'Asia/Ho_Chi_Minh';
 
