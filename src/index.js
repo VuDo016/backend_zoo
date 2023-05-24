@@ -103,12 +103,14 @@ const accountRouter = require('./routes/accountRouter')
 const listImgRouter = require('./routes/listImgRouter')
 const ticketRouter = require('./routes/ticketRouter')
 const paymentRouter = require('./routes/paymentRouter')
+const eventRouter = require('./routes/eventRouter')
 
 app.use('/api/animal', animalRouter);
 app.use('/api/account', accountRouter);
 app.use('/api/images', listImgRouter);
 app.use('/api/ticket', ticketRouter);
 app.use('/api/payment', paymentRouter);
+app.use('/api/event', eventRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
