@@ -1,23 +1,36 @@
 const express = require('express');
 const qrcode = require('qrcode');
 const router = express.Router();
-const { addService, addTicketHistory, addTicket, 
-  getTicketHistoryData, getAllTicketCategories, getAllServiceCategories } = require('../controllers/ticketController');
+const { addService, addTicketHistory, addTicket,
+  getTicketHistoryData, getAllTicketCategories,
+  getAllServiceCategories, updateQRCode } = require('../controllers/ticketController');
 
-router.post('/generate-qr-code', (req, res) => {
-  const paymentData = req.body.paymentData; // Lấy thông tin thanh toán từ yêu cầu của khách hàng
+router.post('/generate-qr-code', (req, res, next) => {
+  const paymentData = req.body.paymentData;
+  const paymentDataString = JSON.stringify(paymentData);
 
-  // Tạo mã QR code từ thông tin thanh toán
-  qrcode.toDataURL(paymentData, { errorCorrectionLevel: 'M' }, (err, url) => {
-    if (err) {
-      // Xử lý lỗi nếu có
+  // Tạo Promise
+  const generateQRCode = () => {
+    return new Promise((resolve, reject) => {
+      qrcode.toDataURL(paymentDataString, { errorCorrectionLevel: 'M' }, (err, url) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(url);
+        }
+      });
+    });
+  };
+
+  generateQRCode()
+    .then(url => {
+      req.qrcode = url;
+      next();
+    })
+    .catch(error => {
       res.status(500).json({ error: 'Failed to generate QR code' });
-    } else {
-      // Trả về mã QR code dưới dạng URL cho khách hàng
-      res.json({ qrCode: url });
-    }
-  });
-});
+    });
+}, updateQRCode);
 
 //Lay created_date theo mui gio VN
 // SELECT id, CONVERT_TZ(created_at, '+00:00', '+07:00') AS created_at_hanoi
