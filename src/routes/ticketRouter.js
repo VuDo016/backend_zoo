@@ -1,9 +1,9 @@
 const express = require('express');
 const qrcode = require('qrcode');
 const router = express.Router();
-const { addService, addTicketHistory, addTicket,
-  getTicketHistoryData, getAllTicketCategories,
-  getAllServiceCategories, updateQRCode } = require('../controllers/ticketController');
+const { addService, addTicketHistory, addTicket, getTicketListByDate,
+  getTicketHistoryData, getAllTicketCategories, getRevenueByMonth, getTicketListByDate2,
+  getAllServiceCategories, updateQRCode, getTicketHistoryDataByIdUser, getRevenueStatistics } = require('../controllers/ticketController');
 
 router.post('/generate-qr-code', (req, res, next) => {
   const paymentData = req.body.paymentData;
@@ -39,6 +39,7 @@ router.post('/generate-qr-code', (req, res, next) => {
 
 router.post('/bill', addTicketHistory);
 router.get('/bill', getTicketHistoryData);
+router.get('/billByID/:id', (req, res, next) => { req.limit = 1; next();}, getTicketHistoryDataByIdUser);
 
 router.post('/service', addService);
 router.get('/service', getAllServiceCategories);
@@ -46,7 +47,12 @@ router.get('/service', getAllServiceCategories);
 router.post('/ticket', addTicket);
 router.get('/ticket', getAllTicketCategories);
 
+router.get('/statistical', getRevenueStatistics);
+router.get('/chart', getRevenueByMonth);
+router.get('/billTenLast', (req, res, next) => { req.limit = 10; next();}, getTicketHistoryDataByIdUser);
 
+router.get('/pageTicket/:page', getTicketListByDate);
+router.get('/pageTicketExpired/:page', getTicketListByDate2);
 
 module.exports = router;
 
