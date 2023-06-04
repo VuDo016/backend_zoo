@@ -143,7 +143,7 @@ const getTicketHistoryDataByIdUser = async (req, res) => {
               FROM ticket_history
               WHERE user_id = ?
               ORDER BY created_at DESC
-`;
+            `;
       const [billResult] = await req.pool.query(billQuery, userId);
       bills = billResult;
     }
@@ -154,7 +154,7 @@ const getTicketHistoryDataByIdUser = async (req, res) => {
             FROM ticket_history
             ORDER BY created_at DESC
             LIMIT 10
-`;
+            `;
       const [billResult] = await req.pool.query(billQuery);
       bills = billResult;
     }
@@ -179,6 +179,13 @@ const getTicketHistoryDataByIdUser = async (req, res) => {
       WHERE s.ticket_history_id = ?
     `;
 
+    // Lấy thông tin dịch vụ từ bảng service cho từng bill
+    const employerQuery = `
+      SELECT avatar_url, first_name, name
+      FROM employer
+      WHERE id = ?
+    `;
+
     const billData = await Promise.all(
       bills.map(async (bill) => {
         const [ticketResult] = await req.pool.query(ticketsQuery, [bill.id]);
@@ -187,10 +194,18 @@ const getTicketHistoryDataByIdUser = async (req, res) => {
         const [serviceResult] = await req.pool.query(servicesQuery, [bill.id]);
         const services = serviceResult;
 
+        let employer = []
+
+        if (limit === 10) {
+          const [employerResult] = await req.pool.query(employerQuery, [bill.user_id]);
+          employer = employerResult;
+        }
+
         return {
           bill,
           tickets,
           services,
+          employer
         };
       })
     );
@@ -264,7 +279,6 @@ const getRevenueStatistics = async (req, res) => {
           AND MONTH(created_at) = MONTH(CURRENT_DATE())
       `;
     const [currentMonthRevenueResult] = await req.pool.query(currentMonthRevenueQuery);
-    console.log(currentMonthRevenueResult)
     const currentMonthTotalRevenue = currentMonthRevenueResult[0].totalRevenue;
 
     // Lấy tổng doanh thu trong tháng trước
@@ -275,7 +289,6 @@ const getRevenueStatistics = async (req, res) => {
           AND MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH)
       `;
     const [previousMonthRevenueResult] = await req.pool.query(previousMonthRevenueQuery);
-    console.log(previousMonthRevenueResult)
     const previousMonthTotalRevenue = previousMonthRevenueResult[0].totalRevenue;
 
     // Tính phần trăm tăng/giảm doanh thu so với tháng trước
@@ -351,6 +364,7 @@ const getRevenueStatistics = async (req, res) => {
     res.status(500).json({ error: 'An error occurred while retrieving statistics' });
   }
 };
+
 const getRevenueByMonth = async (req, res) => {
   try {
     const currentYear = new Date().getFullYear();
@@ -374,7 +388,9 @@ const getRevenueByMonth = async (req, res) => {
       revenueByMonth[monthIndex].revenue = row.revenue;
     });
 
-    res.json(revenueByMonth);
+    const revenueData = revenueByMonth.map((item) => item.revenue);
+
+    res.json(revenueData);
   } catch (error) {
     console.log(error);
     res.sendStatus(500);
@@ -416,9 +432,52 @@ const getTicketListByDate = async (req, res) => {
     const [historyResult] = await req.pool.query(historyQuery, [currentPageDate]);
     const ticketHistories = historyResult;
 
-    res.json({ 
-      success: true, 
-      ticketHistories,
+    // Lấy thông tin vé từ bảng ticket cho từng bill
+    const ticketsQuery = `
+      SELECT t.quantity, sc.ticket_type
+      FROM ticket t
+      INNER JOIN ticket_category sc ON t.ticket_category_id = sc.id
+      WHERE t.ticket_history_id = ?
+    `;
+
+    // Lấy thông tin dịch vụ từ bảng service cho từng bill
+    const servicesQuery = `
+      SELECT s.quantity, sc.name
+      FROM service s
+      INNER JOIN service_category sc ON s.service_category_id = sc.id
+      WHERE s.ticket_history_id = ?
+    `;
+
+    // Lấy thông tin dịch vụ từ bảng service cho từng bill
+    const employerQuery = `
+      SELECT avatar_url, first_name, name
+      FROM employer
+      WHERE id = ?
+    `;
+
+    const billData = await Promise.all(
+      ticketHistories.map(async (bill) => {
+        const [ticketResult] = await req.pool.query(ticketsQuery, [bill.id]);
+        const tickets = ticketResult;
+
+        const [serviceResult] = await req.pool.query(servicesQuery, [bill.id]);
+        const services = serviceResult;
+
+        const [employerResult] = await req.pool.query(employerQuery, [bill.user_id]);
+        const employer = employerResult;
+
+        return {
+          bill,
+          tickets,
+          services,
+          employer
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      billData,
       visitDate: formattedDate, // Ngày tham quan trang hiện tại
       totalPages: distinctDates.length // Số lượng trang có dữ liệu
     });
@@ -464,9 +523,52 @@ const getTicketListByDate2 = async (req, res) => {
     const [historyResult] = await req.pool.query(historyQuery, [currentPageDate, itemsPerPage]);
     const ticketHistories = historyResult;
 
-    res.json({ 
-      success: true, 
-      ticketHistories,
+    // Lấy thông tin vé từ bảng ticket cho từng bill
+    const ticketsQuery = `
+      SELECT t.quantity, sc.ticket_type
+      FROM ticket t
+      INNER JOIN ticket_category sc ON t.ticket_category_id = sc.id
+      WHERE t.ticket_history_id = ?
+    `;
+
+    // Lấy thông tin dịch vụ từ bảng service cho từng bill
+    const servicesQuery = `
+      SELECT s.quantity, sc.name
+      FROM service s
+      INNER JOIN service_category sc ON s.service_category_id = sc.id
+      WHERE s.ticket_history_id = ?
+    `;
+
+    // Lấy thông tin dịch vụ từ bảng service cho từng bill
+    const employerQuery = `
+      SELECT avatar_url, first_name, name
+      FROM employer
+      WHERE id = ?
+    `;
+
+    const billData = await Promise.all(
+      ticketHistories.map(async (bill) => {
+        const [ticketResult] = await req.pool.query(ticketsQuery, [bill.id]);
+        const tickets = ticketResult;
+
+        const [serviceResult] = await req.pool.query(servicesQuery, [bill.id]);
+        const services = serviceResult;
+
+        const [employerResult] = await req.pool.query(employerQuery, [bill.user_id]);
+        const employer = employerResult;
+
+        return {
+          bill,
+          tickets,
+          services,
+          employer
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      billData,
       visitDate: formattedDate, // Ngày tham quan trang hiện tại
       totalPages: Math.ceil(distinctDates.length / itemsPerPage) // Số lượng trang có dữ liệu
     });

@@ -4,6 +4,7 @@ const router = express.Router();
 const { addService, addTicketHistory, addTicket, getTicketListByDate,
   getTicketHistoryData, getAllTicketCategories, getRevenueByMonth, getTicketListByDate2,
   getAllServiceCategories, updateQRCode, getTicketHistoryDataByIdUser, getRevenueStatistics } = require('../controllers/ticketController');
+const { verifyToken } = require('../controllers/accountController');
 
 router.post('/generate-qr-code', (req, res, next) => {
   const paymentData = req.body.paymentData;
@@ -37,22 +38,22 @@ router.post('/generate-qr-code', (req, res, next) => {
 // FROM ticket_history;
 
 
-router.post('/bill', addTicketHistory);
-router.get('/bill', getTicketHistoryData);
-router.get('/billByID/:id', (req, res, next) => { req.limit = 1; next();}, getTicketHistoryDataByIdUser);
+router.post('/bill', verifyToken, addTicketHistory);
+router.get('/bill', verifyToken, getTicketHistoryData);
+router.get('/billByID/:id', verifyToken, (req, res, next) => { req.limit = 1; next(); }, getTicketHistoryDataByIdUser);
 
-router.post('/service', addService);
-router.get('/service', getAllServiceCategories);
+router.post('/service', verifyToken, addService);
+router.get('/service', verifyToken, getAllServiceCategories);
 
-router.post('/ticket', addTicket);
-router.get('/ticket', getAllTicketCategories);
+router.post('/ticket', verifyToken, addTicket);
+router.get('/ticket', verifyToken, getAllTicketCategories);
 
-router.get('/statistical', getRevenueStatistics);
-router.get('/chart', getRevenueByMonth);
-router.get('/billTenLast', (req, res, next) => { req.limit = 10; next();}, getTicketHistoryDataByIdUser);
+router.get('/statistical', verifyToken, getRevenueStatistics);
+router.get('/chart', verifyToken, getRevenueByMonth);
+router.get('/billTenLast', verifyToken, (req, res, next) => { req.limit = 10; next(); }, getTicketHistoryDataByIdUser);
 
-router.get('/pageTicket/:page', getTicketListByDate);
-router.get('/pageTicketExpired/:page', getTicketListByDate2);
+router.get('/pageTicket/:page', verifyToken, getTicketListByDate);
+router.get('/pageTicketExpired/:page', verifyToken, getTicketListByDate2);
 
 module.exports = router;
 

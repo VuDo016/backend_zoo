@@ -70,10 +70,10 @@ router.delete('/logout', getAllUser, verifyToken, async (req, res) => {
 	res.sendStatus(204)
 })
 
-router.get('/:id', getUserById)
+router.get('/:id', verifyToken, getUserById)
 
-router.put('/', updatetUserById)
+router.put('/', verifyToken, updatetUserById)
 
-router.put('/updatePass', updatePassword)
+router.put('/updatePass', verifyToken, updatePassword)
 
 module.exports = router;
