@@ -48,4 +48,45 @@ const getAnimalBySpecies = async (req, res) => {
   }
 };
 
-module.exports = { getAllAnimal, getAnimalBySpecies };
+const addNewAnimal = async (req, res) => {
+  try {
+    const { name, species, habitat, description, age, food, area, iconFood, iconHabitat, iucn_status_id, name2 } = req.body;
+
+    const insertSql = `
+      INSERT INTO animal (name, species, habitat, description, age, food, area, iconFood, iconHabitat, iucn_status_id, name2)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const values = [name, species, habitat, description, age, food, area, iconFood, iconHabitat, iucn_status_id, name2];
+
+    const [result] = await req.pool.query(insertSql, values);
+
+    const newAnimalId = result.insertId;
+
+    res.json({ id: newAnimalId });
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+
+const updateAnimal = async (req, res) => {
+  try {
+    const { id, name, species, habitat, description, age, food, area, iconFood, iconHabitat, iucn_status_id, name2 } = req.body;
+
+    const updateSql = `
+      UPDATE animal
+      SET name = ?, species = ?, habitat = ?, description = ?, age = ?, food = ?, area = ?, iconFood = ?, iconHabitat = ?, iucn_status_id = ?, name2 = ?
+      WHERE id = ?
+    `;
+    const values = [name, species, habitat, description, age, food, area, iconFood, iconHabitat, iucn_status_id, name2, id];
+    console.log(values)
+    await req.pool.query(updateSql, values);
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+
+module.exports = { getAllAnimal, getAnimalBySpecies, addNewAnimal, updateAnimal };
