@@ -35,4 +35,46 @@ const getEventsByDate = async (req, res) => {
   }
 };
 
-module.exports = { getAllEvents, getEventsByDate };
+const addNewEvent = async (req, res) => {
+  try {
+    const { name, description_short, description, image_url, location, price, start_time, end_time, longTime } = req.body;
+
+    const insertSql = `
+      INSERT INTO event_zoo (name, description_short, description, image_url, location, price, start_time, end_time, longTime)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const values = [name, description_short, description, image_url, location, price, start_time, end_time, longTime];
+
+    const [result] = await req.pool.query(insertSql, values);
+
+    const newEventId = result.insertId;
+
+    res.json({ id: newEventId });
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+
+const updateEvent = async (req, res) => {
+  try {
+    const { id, name, description_short, description, image_url, location, price, start_time, end_time, longTime } = req.body;
+
+    const updateSql = `
+      UPDATE event_zoo
+      SET name = ?, description_short = ?, description = ?, image_url = ?, location = ?, price = ?, start_time = ?, end_time = ?, longTime = ?
+      WHERE id = ?
+    `;
+    const values = [name, description_short, description, image_url, location, price, start_time, end_time, longTime, id];
+
+    await req.pool.query(updateSql, values);
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+
+
+module.exports = { getAllEvents, getEventsByDate, addNewEvent, updateEvent };
