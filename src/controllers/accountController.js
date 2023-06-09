@@ -18,14 +18,27 @@ const getUserById = async (req, res, next) => {
     try {
         const { id } = req.params; // Lấy ID từ URL parameter
 
-        const sql = 'SELECT * FROM employer WHERE id = ?';
+        const sql = `
+        SELECT employer.*, membership_rank.rank_name, membership_rank.min_total_price, membership_rank.discount_percentage, 
+        SUM(ticket_history.total_price) AS total_purchase_amount
+        FROM employer
+        JOIN membership_rank ON employer.membership_rank_id = membership_rank.id
+        LEFT JOIN ticket_history ON employer.id = ticket_history.user_id
+        WHERE employer.id = ?
+      `;
         const [rows] = await req.pool.query(sql, [id]);
 
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Không tìm thấy khách hàng' });
         }
 
-        res.json(rows[0]);
+        const user = rows[0];
+        const totalPurchaseAmount = user.total_purchase_amount || 0; // Nếu không có hóa đơn, tổng tiền mua sẽ là 0
+
+        // Thêm thông tin tổng tiền mua vào đối tượng user
+        user.total_purchase_amount = totalPurchaseAmount;
+
+        res.json(user);
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
@@ -109,7 +122,7 @@ const createEmployer = async (req, res, next) => {
 
         const nameParts = trimmedFullName.split(/\s+/);
         const hashedPassword = await bcrypt.hash(password, 10);
-        const sql = 'INSERT INTO employer (email, password, first_name, name) VALUES (?, ?, ?, ?)';
+        const sql = 'INSERT INTO employer (email, password, first_name, name, membership_rank_id) VALUES (?, ?, ?, ?,1)';
         const values = [email, hashedPassword, nameParts[0], nameParts[nameParts.length - 1]];
         await req.pool.query(sql, values);
         next();
@@ -129,7 +142,7 @@ const generateTokens = payload => {
         { id, email },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: '5m'
+            expiresIn: '1m'
         }
     )
 
@@ -167,7 +180,6 @@ const verifyToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-
         req.userId = decoded.id
         next()
     } catch (error) {
@@ -177,45 +189,85 @@ const verifyToken = (req, res, next) => {
 }
 
 const updatePassword = async (req, res) => {
-  try {
-    const { pass, newPass, idKH } = req.body;
+    try {
+        const { pass, newPass, idKH } = req.body;
 
-    if (newPass === "") {
-        return res.status(401).json({ message: "Vui lòng không được trống mật khẩu !!!!" });
+        if (newPass === "") {
+            return res.status(401).json({ message: "Vui lòng không được trống mật khẩu !!!!" });
+        }
+
+        // Kiểm tra mật khẩu có độ dài tối thiểu là 8 ký tự
+        if (newPass.length < 8) {
+            return res
+                .status(400)
+                .json({ message: "Mật khẩu mới phải có ít nhất 8 ký tự" });
+        }
+
+        // Kiểm tra mật khẩu cũ
+        const sql = 'SELECT password FROM employer WHERE id = ?';
+        const [rows] = await req.pool.query(sql, [idKH]);
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        }
+
+        const currentPassword = rows[0].password;
+        const isPasswordMatch = await bcrypt.compare(pass, currentPassword);
+        if (!isPasswordMatch) {
+            return res.status(401).json({ message: 'Mật khẩu cũ không chính xác' });
+        }
+
+        // Cập nhật mật khẩu mới
+        const hashedPassword = await bcrypt.hash(newPass, 10);
+        const updateSql = 'UPDATE employer SET password = ? WHERE id = ?';
+        await req.pool.query(updateSql, [hashedPassword, idKH]);
+
+        res.status(200).json({ message: 'Cập nhật mật khẩu thành công' });
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
     }
-
-    // Kiểm tra mật khẩu có độ dài tối thiểu là 8 ký tự
-    if (newPass.length < 8) {
-        return res
-            .status(400)
-            .json({ message: "Mật khẩu mới phải có ít nhất 8 ký tự" });
-    }
-
-    // Kiểm tra mật khẩu cũ
-    const sql = 'SELECT password FROM employer WHERE id = ?';
-    const [rows] = await req.pool.query(sql, [idKH]);
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
-    }
-
-    const currentPassword = rows[0].password;
-    const isPasswordMatch = await bcrypt.compare(pass, currentPassword);
-    if (!isPasswordMatch) {
-      return res.status(401).json({ message: 'Mật khẩu cũ không chính xác' });
-    }
-
-    // Cập nhật mật khẩu mới
-    const hashedPassword = await bcrypt.hash(newPass, 10);
-    const updateSql = 'UPDATE employer SET password = ? WHERE id = ?';
-    await req.pool.query(updateSql, [hashedPassword, idKH]);
-
-    res.status(200).json({ message: 'Cập nhật mật khẩu thành công' });
-  } catch (error) {
-    console.log(error);
-    res.sendStatus(500);
-  }
 };
 
+const updateMembershipRank = async (req, res, next) => {
+    try {
+        const { id } = req.params; // Lấy ID khách hàng từ URL parameter
 
-module.exports = { generateTokens, updateRefreshToken, verifyToken, 
-    getAllUser, createEmployer, getUserById, updatetUserById, updatePassword };
+        // Truy vấn để tính tổng tiền của tất cả các hóa đơn
+        const sql = `
+        SELECT SUM(total_price) AS totalSpent
+        FROM ticket_history
+        WHERE user_id = ?;
+      `;
+        const [rows] = await req.pool.query(sql, [id]);
+        const totalSpent = rows[0].totalSpent;
+
+        // Truy vấn để tìm thứ hạng tương ứng với tổng tiền đã chi
+        const rankSql = `
+        SELECT id, min_total_price
+        FROM membership_rank
+        WHERE min_total_price <= ?
+        ORDER BY min_total_price DESC
+        LIMIT 1;
+      `;
+        const [rankRows] = await req.pool.query(rankSql, [totalSpent]);
+        const membershipRankId = rankRows[0].id;
+
+        // Cập nhật thứ hạng cho khách hàng
+        const updateSql = `
+        UPDATE employer
+        SET membership_rank_id = ?
+        WHERE id = ?;
+      `;
+        await req.pool.query(updateSql, [membershipRankId, id]);
+
+        res.json({ message: 'Cập nhật thứ hạng thành công' });
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+};
+
+module.exports = {
+    generateTokens, updateRefreshToken, verifyToken, updateMembershipRank,
+    getAllUser, createEmployer, getUserById, updatetUserById, updatePassword
+};

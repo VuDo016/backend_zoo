@@ -43,10 +43,10 @@ router.get('/bill', verifyToken, getTicketHistoryData);
 router.get('/billByID/:id', verifyToken, (req, res, next) => { req.limit = 1; next(); }, getTicketHistoryDataByIdUser);
 
 router.post('/service', verifyToken, addService);
-router.get('/service', verifyToken, getAllServiceCategories);
+router.get('/service', getAllServiceCategories);
 
 router.post('/ticket', verifyToken, addTicket);
-router.get('/ticket', verifyToken, getAllTicketCategories);
+router.get('/ticket', getAllTicketCategories);
 
 router.get('/statistical', verifyToken, getRevenueStatistics);
 router.get('/chart', verifyToken, getRevenueByMonth);

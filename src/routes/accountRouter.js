@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const router = express.Router();
 const { generateTokens, updateRefreshToken,
 	verifyToken, getAllUser, createEmployer, 
-	getUserById, updatetUserById, updatePassword } = require('../controllers/accountController');
+	getUserById, updatetUserById, updatePassword, updateMembershipRank } = require('../controllers/accountController');
 
 router.post('/login', getAllUser, async (req, res) => {
 	const { email, password } = req.body;
@@ -45,6 +45,7 @@ router.post('/register', createEmployer, (req, res) => {
 
 router.post('/token', getAllUser, async (req, res) => {
 	const refreshToken = req.body.refreshToken
+
 	if (!refreshToken) return res.sendStatus(401)
 
 	const user = req.user.find(user => user.refreshToken === refreshToken)
@@ -75,5 +76,7 @@ router.get('/:id', verifyToken, getUserById)
 router.put('/', verifyToken, updatetUserById)
 
 router.put('/updatePass', verifyToken, updatePassword)
+
+router.put('/updateRank/:id', verifyToken, updateMembershipRank)
 
 module.exports = router;
