@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const router = express.Router();
 const { generateTokens, updateRefreshToken,
 	verifyToken, getAllUser, createEmployer, 
-	getUserById, updatetUserById, updatePassword, updateMembershipRank } = require('../controllers/accountController');
+	getUserById, updatetUserById, updatePassword, updateMembershipRank, createStaff } = require('../controllers/accountController');
 
 router.post('/login', getAllUser, async (req, res) => {
 	const { email, password } = req.body;
@@ -24,7 +24,7 @@ router.post('/login', getAllUser, async (req, res) => {
 
 					const tokens = generateTokens(user)
 					await updateRefreshToken(req, res, email, tokens.refreshToken)
-					res.status(200).json({ message: "Đăng nhập thành công", tokens: tokens, userId: user.id });
+					res.status(200).json({ message: "Đăng nhập thành công", tokens: tokens, userId: user.id, role: user.role });
 
 					isLoggedIn = true; // Đánh dấu đã đăng nhập thành công
 					break; // Thoát khỏi vòng lặp sau khi đăng nhập thành công
@@ -40,6 +40,10 @@ router.post('/login', getAllUser, async (req, res) => {
 
 
 router.post('/register', createEmployer, (req, res) => {
+	res.status(200).json({ message: "Tạo tài khoản thành công !" });
+})
+
+router.post('/registerStaff', createStaff, (req, res) => {
 	res.status(200).json({ message: "Tạo tài khoản thành công !" });
 })
 

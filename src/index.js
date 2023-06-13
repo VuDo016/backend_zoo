@@ -8,76 +8,76 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-//chat
-const http = require('http').createServer(app);
-const io = require('socket.io')(http);
-const { v4: uuidv4 } = require('uuid');
+// //chat
+// const http = require('http').createServer(app);
+// const io = require('socket.io')(http);
+// const { v4: uuidv4 } = require('uuid');
 
-// Lưu trữ thông tin phiên chat và tin nhắn
-const chatSessions = {};
+// // Lưu trữ thông tin phiên chat và tin nhắn
+// const chatSessions = {};
 
-function generateChatId() {
-    return uuidv4();
-}
+// function generateChatId() {
+//     return uuidv4();
+// }
 
-// API endpoint để bắt đầu phiên chat
-app.post('/chat', (req, res) => {
-    // Tạo mã phiên chat
-    const chatId = generateChatId();
+// // API endpoint để bắt đầu phiên chat
+// app.post('/chat', (req, res) => {
+//     // Tạo mã phiên chat
+//     const chatId = generateChatId();
 
-    // Lưu trữ thông tin phiên chat và mảng tin nhắn trong chatSessions
-    chatSessions[chatId] = { messages: [] };
+//     // Lưu trữ thông tin phiên chat và mảng tin nhắn trong chatSessions
+//     chatSessions[chatId] = { messages: [] };
 
-    // Trả về mã phiên chat cho ứng dụng React Native
-    res.json({ chatId });
-});
+//     // Trả về mã phiên chat cho ứng dụng React Native
+//     res.json({ chatId });
+// });
 
-// Xử lý kết nối socket.io
-io.on('connection', (socket) => {
-    console.log('A user connected');
+// // Xử lý kết nối socket.io
+// io.on('connection', (socket) => {
+//     console.log('A user connected');
 
-    // Xử lý khi một người dùng tham gia phiên chat
-    socket.on('join-chat', (chatId) => {
-        console.log('User joined chat:', chatId);
+//     // Xử lý khi một người dùng tham gia phiên chat
+//     socket.on('join-chat', (chatId) => {
+//         console.log('User joined chat:', chatId);
 
-        // Lưu trữ thông tin phiên chat trong socket
-        socket.chatId = chatId;
+//         // Lưu trữ thông tin phiên chat trong socket
+//         socket.chatId = chatId;
 
-        // Tham gia vào room tương ứng với phiên chat
-        socket.join(chatId);
+//         // Tham gia vào room tương ứng với phiên chat
+//         socket.join(chatId);
 
-        // Lấy các tin nhắn trước đó trong phiên chat và gửi lại cho người dùng
-        const chat = chatSessions[chatId];
-        const previousMessages = chat ? chat.messages : [];
-        socket.emit('previous-messages', previousMessages);
-    });
+//         // Lấy các tin nhắn trước đó trong phiên chat và gửi lại cho người dùng
+//         const chat = chatSessions[chatId];
+//         const previousMessages = chat ? chat.messages : [];
+//         socket.emit('previous-messages', previousMessages);
+//     });
 
-    // Xử lý khi một tin nhắn được gửi
-    socket.on('send-message', (message) => {
-        console.log('Message received:', message);
+//     // Xử lý khi một tin nhắn được gửi
+//     socket.on('send-message', (message) => {
+//         console.log('Message received:', message);
 
-        // Lấy thông tin phiên chat từ socket
-        const chatId = socket.chatId;
+//         // Lấy thông tin phiên chat từ socket
+//         const chatId = socket.chatId;
 
-        // Lưu trữ tin nhắn vào chatSessions
-        if (chatSessions[chatId]) {
-            chatSessions[chatId].messages.push(message);
-        }
+//         // Lưu trữ tin nhắn vào chatSessions
+//         if (chatSessions[chatId]) {
+//             chatSessions[chatId].messages.push(message);
+//         }
 
-        // Gửi tin nhắn đến người nhận
-        socket.to(chatId).emit('new-message', message);
-    });
+//         // Gửi tin nhắn đến người nhận
+//         socket.to(chatId).emit('new-message', message);
+//     });
 
-    // Xử lý khi một người dùng rời khỏi phiên chat
-    socket.on('disconnect', () => {
-        console.log('A user disconnected');
+//     // Xử lý khi một người dùng rời khỏi phiên chat
+//     socket.on('disconnect', () => {
+//         console.log('A user disconnected');
 
-        // Xóa thông tin phiên chat liên quan đến socket
-        delete socket.chatId;
-    });
-});
+//         // Xóa thông tin phiên chat liên quan đến socket
+//         delete socket.chatId;
+//     });
+// });
 
-/////////////////
+// /////////////////
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -135,7 +135,7 @@ app.use(function(err, req, res, next) {
 // Start server
 const port = process.env.PORT || 3000;
 const host = '0.0.0.0'; // cấu hình để lắng nghe trên tất cả các địa chỉ IP
-http.listen(port, host, () => {
+app.listen(port, host, () => {
   console.log(`Server is listening on ${host}:${port}`);
 });
 

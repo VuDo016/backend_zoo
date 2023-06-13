@@ -132,7 +132,77 @@ const createEmployer = async (req, res, next) => {
     }
 };
 
+const createStaff = async (req, res, next) => {
+    try {
+        const { email, password, name } = req.body;
 
+        if (email === "" || password === "" || name === "") {
+            return res.status(401).json({ message: "Vui lòng nhập đủ tt !!!!" });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: "Email không hợp lệ" });
+        }
+
+        // Kiểm tra mật khẩu có độ dài tối thiểu là 8 ký tự
+        if (password.length < 8) {
+            return res
+                .status(400)
+                .json({ message: "Mật khẩu phải có ít nhất 8 ký tự" });
+        }
+
+        const trimmedFullName = name.trim();
+
+        const validateVietnameseFullName = (name) => {
+            const words = name.split(" ");
+
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+
+                // Kiểm tra số lượng ký tự trong từ
+                if (word.length < 2) {
+                    return false;
+                }
+
+                // Kiểm tra từng chữ trong từ
+                for (let j = 0; j < word.length; j++) {
+                    const character = word.charAt(j);
+
+                    // Kiểm tra chữ cái đầu viết hoa
+                    if (j === 0 && !/[\p{Lu}]/u.test(character)) {
+                        return false;
+                    }
+
+                    // Kiểm tra chữ cái tiếp theo viết thường
+                    if (j !== 0 && !/[\p{Ll}]/u.test(character)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        };
+
+        const nameRegex = /^([^\d\s!@#$%^&*()_+=\-[\]{}|\\:;"'<>,.?/~`])+(?:\s+[^\d\s!@#$%^&*()_+=\-[\]{}|\\:;"'<>,.?/~`]+)*$/;
+
+        const isNameValid = validateVietnameseFullName(trimmedFullName) && nameRegex.test(trimmedFullName);
+
+        if (!isNameValid) {
+            return res.status(400).json({ message: "Tên không hợp lệ" });
+        }
+
+        const nameParts = trimmedFullName.split(/\s+/);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const sql = 'INSERT INTO employer (email, password, first_name, name, membership_rank_id, role) VALUES (?, ?, ?, ?,1,"STAFF")';
+        const values = [email, hashedPassword, nameParts[0], nameParts[nameParts.length - 1]];
+        await req.pool.query(sql, values);
+        next();
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+};
 
 const generateTokens = payload => {
     const { id, email } = payload
@@ -269,5 +339,5 @@ const updateMembershipRank = async (req, res, next) => {
 
 module.exports = {
     generateTokens, updateRefreshToken, verifyToken, updateMembershipRank,
-    getAllUser, createEmployer, getUserById, updatetUserById, updatePassword
+    getAllUser, createEmployer, getUserById, updatetUserById, updatePassword, createStaff
 };
