@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken')
 require('dotenv').config()
 const bcrypt = require('bcrypt');
 const router = express.Router();
-const { generateTokens, updateRefreshToken,
-	verifyToken, getAllUser, createEmployer, 
+const { generateTokens, updateRefreshToken, searchEmployer,
+	verifyToken, getAllUser, createEmployer, getUserByRole,
 	getUserById, updatetUserById, updatePassword, updateMembershipRank, createStaff } = require('../controllers/accountController');
 
 router.post('/login', getAllUser, async (req, res) => {
@@ -76,6 +76,10 @@ router.delete('/logout', getAllUser, verifyToken, async (req, res) => {
 })
 
 router.get('/:id', verifyToken, getUserById)
+
+router.get('/all/:role', verifyToken, getUserByRole)
+
+router.get('/search/:role', verifyToken, searchEmployer)
 
 router.put('/', verifyToken, updatetUserById)
 

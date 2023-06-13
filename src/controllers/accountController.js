@@ -337,7 +337,75 @@ const updateMembershipRank = async (req, res, next) => {
     }
 };
 
+const getUserByRole = async (req, res, next) => {
+    try {
+        const { role } = req.params; // Lấy ID từ URL parameter
+
+        const sql = `
+        SELECT *
+        FROM employer
+        WHERE employer.role = ?
+      `;
+        const rows = await req.pool.query(sql, [role]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Dữ liệu bị rỗng' });
+        }
+
+        res.json(rows[0]);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+};
+
+const searchEmployer = async (req, res, next) => {
+    try {
+        const { keyword } = req.query; // Lấy từ khóa tìm kiếm từ query parameter
+        const { role } = req.params; // Lấy vai trò từ URL parameter
+
+        let sql;
+        let searchKeyword;
+        if (role === 'STAFF') {
+            sql = `
+          SELECT *
+          FROM employer
+          WHERE employer.role = 'STAFF'
+            AND (employer.first_name LIKE ? OR employer.name LIKE ? OR employer.email LIKE ? OR employer.phone LIKE ? OR employer.address LIKE ?)
+        `;
+            searchKeyword = `%${keyword}%`;
+        } else if (role === 'USER') {
+            sql = `
+          SELECT *
+          FROM employer
+          WHERE employer.role = 'USER'
+            AND (employer.first_name LIKE ? OR employer.name LIKE ? OR employer.email LIKE ? OR employer.phone LIKE ? OR employer.address LIKE ?)
+        `;
+            searchKeyword = `%${keyword}%`;
+        } else {
+            return res.status(400).json({ message: 'Vai trò không hợp lệ' });
+        }
+
+        const rows = await req.pool.query(sql, [
+            searchKeyword,
+            searchKeyword,
+            searchKeyword,
+            searchKeyword,
+            searchKeyword,
+        ]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy khách hàng' });
+        }
+
+        res.json(rows[0]);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+};
+
 module.exports = {
-    generateTokens, updateRefreshToken, verifyToken, updateMembershipRank,
-    getAllUser, createEmployer, getUserById, updatetUserById, updatePassword, createStaff
+    generateTokens, updateRefreshToken, verifyToken, updateMembershipRank, getUserByRole,
+    getAllUser, createEmployer, getUserById, updatetUserById, updatePassword, createStaff, searchEmployer
 };
