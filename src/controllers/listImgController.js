@@ -1,3 +1,4 @@
+///////Animal
 const upImagetoDBAnimal = async (urls, animalId, req, res) => {
     try {
         const values = urls.map((url) => [url, animalId]);
@@ -29,6 +30,7 @@ const deleteImageAnimal = async (animalId, req, res) => {
     return urls
 };
 
+///////////Comment
 const upImagetoDBFeedback = async (urls, feedbackId, req, res) => {
     try {
         const values = urls.map((url) => [url, feedbackId]);
@@ -60,6 +62,49 @@ const deleteImageFeedback = async (feedbackId, req, res) => {
     return urls;
 };
 
+/////////////Info User
+const updateUserImageURL = async (urls, userId, req, res) => {
+    try {
+        const sql = `
+        UPDATE employer
+        SET avatar_url = ?
+        WHERE id = ?
+      `;
+        const [result] = await req.pool.query(sql, [urls[0], userId]);
+
+        if (result.affectedRows === 0) {
+            // Không có user nào được cập nhật
+            return res.status(404).json({ error: "user not found" });
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+};
+
+/////////////Event
+const updateEventImageURL = async (urls, eventId, req, res) => {
+    try {
+        const sql = `
+        UPDATE event_zoo
+        SET image_url = ?
+        WHERE id = ?
+      `;
+        const [result] = await req.pool.query(sql, [urls[0], eventId]);
+
+        if (result.affectedRows === 0) {
+            // Không có sự kiện nào được cập nhật
+            return res.status(404).json({ error: "Event not found" });
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+};
 
 const extractFileNameFromUrl = (url) => {
     const urlParts = url.split("/");
@@ -69,4 +114,4 @@ const extractFileNameFromUrl = (url) => {
     return decodedFileName;
 };
 
-module.exports = { upImagetoDBAnimal, deleteImageAnimal, upImagetoDBFeedback, deleteImageFeedback, extractFileNameFromUrl };
+module.exports = { upImagetoDBAnimal, deleteImageAnimal, upImagetoDBFeedback, deleteImageFeedback, extractFileNameFromUrl, updateUserImageURL, updateEventImageURL };

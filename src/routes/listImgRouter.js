@@ -4,7 +4,8 @@ const router = express.Router();
 const multer = require("multer");
 
 const serviceAccount = require("../config/serviceAccountKey.json");
-const { upImagetoDBAnimal, deleteImageAnimal, upImagetoDBFeedback, deleteImageFeedback, extractFileNameFromUrl } = require('../controllers/listImgController');
+const { upImagetoDBAnimal, deleteImageAnimal, upImagetoDBFeedback, 
+    deleteImageFeedback, extractFileNameFromUrl, updateEventImageURL, updateUserImageURL } = require('../controllers/listImgController');
 const { verifyToken } = require('../controllers/accountController');
 
 admin.initializeApp({
@@ -46,6 +47,10 @@ router.post("/:type/:id", verifyToken, upload.array("images"), async (req, res) 
                 folderName = "animal";
             } else if (type === "feedback") {
                 folderName = "feedback";
+            } else if (type === "user") {
+                folderName = "user";
+            } else if (type === "event") {
+                folderName = "event";
             } else {
                 return res.sendStatus(400); // Bad request
             }
@@ -75,6 +80,10 @@ router.post("/:type/:id", verifyToken, upload.array("images"), async (req, res) 
             upImagetoDBFunction = upImagetoDBAnimal;
         } else if (type === "feedback") {
             upImagetoDBFunction = upImagetoDBFeedback;
+        } else if (type === "user") {
+            upImagetoDBFunction = updateUserImageURL;
+        } else if (type === "event") {
+            upImagetoDBFunction = updateEventImageURL;
         } else {
             return res.sendStatus(400); // Bad request
         }
@@ -147,6 +156,36 @@ router.delete('/:type/:id', verifyToken, async (req, res) => {
         await Promise.all(filePaths.map(filePath => bucket.file(filePath).delete()));
 
         res.sendStatus(204);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
+router.post('/delImgByURL', verifyToken, async (req, res) => {
+    try {
+        const { type, url, id } = req.body;
+        let folderName;
+
+        if (type === "user") {
+            folderName = "user";
+        } else if (type === "event") {
+            folderName = "event";
+        } else {
+            return res.sendStatus(400); // Bad request
+        }
+
+        // Xóa tất cả các ảnh có url tương ứng trên Storage Firebase
+        const bucket = admin.storage().bucket();
+
+        // Tạo danh sách các đường dẫn đến tệp tin cần xóa
+        const fileName = extractFileNameFromUrl(url);
+        const filePath = `${folderName}/${id}/${fileName}`;
+
+        // Xóa các tệp tin từ danh sách đường dẫn
+        await bucket.file(filePath).delete();
+
+        res.status(204).json({ message: "Delete img in firebase success!!" });
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
