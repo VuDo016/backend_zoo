@@ -76,5 +76,23 @@ const updateEvent = async (req, res) => {
   }
 };
 
+const deleteEvent = async (req, res) => {
+  try {
+    const eventId = req.params.id; // Lấy ID từ tham số URL
 
-module.exports = { getAllEvents, getEventsByDate, addNewEvent, updateEvent };
+    const deleteSql = `
+      DELETE FROM event_zoo
+      WHERE id = ?
+    `;
+    const values = [eventId];
+
+    await req.pool.query(deleteSql, values);
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+
+module.exports = { getAllEvents, getEventsByDate, addNewEvent, updateEvent, deleteEvent };

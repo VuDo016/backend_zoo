@@ -89,4 +89,23 @@ const updateAnimal = async (req, res) => {
   }
 };
 
-module.exports = { getAllAnimal, getAnimalBySpecies, addNewAnimal, updateAnimal };
+const deleteAnimal = async (req, res) => {
+  try {
+    const animalId = req.params.id; // Lấy ID từ tham số URL
+
+    const deleteSql = `
+      DELETE FROM animal
+      WHERE id = ?
+    `;
+    const values = [animalId];
+
+    await req.pool.query(deleteSql, values);
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+
+module.exports = { getAllAnimal, getAnimalBySpecies, addNewAnimal, updateAnimal, deleteAnimal };

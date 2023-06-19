@@ -1,9 +1,10 @@
 const express = require('express');
 const qrcode = require('qrcode');
 const router = express.Router();
-const { addService, addTicketHistory, addTicket, getTicketListByDate,
+const { addService, addTicketHistory, addTicket, getTicketListByDate, checkAndUpdateBill,
   getTicketHistoryData, getAllTicketCategories, getRevenueByMonth, getTicketListByDate2,
-  getAllServiceCategories, updateQRCode, getTicketHistoryDataByIdUser, getRevenueStatistics } = require('../controllers/ticketController');
+  getAllServiceCategories, updateQRCode, getTicketHistoryDataByIdUser, getRevenueStatistics, updateStatustoTicket,
+  updateIsCancel } = require('../controllers/ticketController');
 const { verifyToken } = require('../controllers/accountController');
 
 router.post('/generate-qr-code', (req, res, next) => {
@@ -54,6 +55,11 @@ router.get('/billTenLast', verifyToken, (req, res, next) => { req.limit = 10; ne
 
 router.get('/pageTicket/:page', verifyToken, getTicketListByDate);
 router.get('/pageTicketExpired/:page', verifyToken, getTicketListByDate2);
+
+router.put('/scanQRcode', verifyToken, checkAndUpdateBill);
+router.put('/reqCancle', verifyToken, updateIsCancel);
+router.get('/billCancle', verifyToken, (req, res, next) => { req.limit = 2; next(); }, getTicketHistoryDataByIdUser);
+router.put('/updateBilltoCancle/:ticketHistoryId', verifyToken, updateStatustoTicket);
 
 module.exports = router;
 

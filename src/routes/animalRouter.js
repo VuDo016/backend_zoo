@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllAnimal, getAnimalBySpecies, addNewAnimal, updateAnimal } = require('../controllers/animalController');
+const { getAllAnimal, getAnimalBySpecies, addNewAnimal, updateAnimal, deleteAnimal } = require('../controllers/animalController');
 const { verifyToken } = require('../controllers/accountController');
 
 
@@ -9,5 +9,6 @@ router.get('/', verifyToken, getAllAnimal);
 router.get('/getBySpecies/:species', verifyToken, getAnimalBySpecies);
 router.post('/', verifyToken, addNewAnimal)
 router.put('/', verifyToken, updateAnimal)
+router.delete('/:id', verifyToken, deleteAnimal)
 
 module.exports = router;

@@ -26,9 +26,21 @@ router.get('/querydr', function (req, res, next) {
 });
 
 router.get('/refund', function (req, res, next) {
+    let codeBill = req.query.codeBill;
+    let price = req.query.price;
 
-    let desc = 'Hoan tien GD thanh toan';
-    res.render('refund', { title: 'Hoàn tiền giao dịch thanh toán' })
+    const currentDate = new Date();
+
+  const year = currentDate.getFullYear().toString();
+  const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+  const day = currentDate.getDate().toString().padStart(2, '0');
+  const hours = currentDate.getHours().toString().padStart(2, '0');
+  const minutes = currentDate.getMinutes().toString().padStart(2, '0');
+  const seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+  const date = year + month + day + hours + minutes + seconds;
+
+    res.render('refund', { title: 'Hoàn tiền giao dịch thanh toán', price, codeBill, date })
 });
 
 
@@ -96,7 +108,7 @@ router.get('/vnpay_return', function (req, res, next) {
     delete vnp_Params['vnp_SecureHashType'];
 
     vnp_Params = sortObject(vnp_Params);
- 
+
     const config = require('../config/paymentConfig.json');
     const secretKey = config.vnp_HashSecret;
 
@@ -235,18 +247,18 @@ router.post('/querydr', function (req, res, next) {
 router.post('/refund', function (req, res, next) {
 
     process.env.TZ = 'Asia/Ho_Chi_Minh';
-    let date = new Date();
+    const date = new Date();
 
-    let config = require('config');
+    const config = require('../config/paymentConfig.json');
     let crypto = require("crypto");
 
-    let vnp_TmnCode = config.get('vnp_TmnCode');
-    let secretKey = config.get('vnp_HashSecret');
-    let vnp_Api = config.get('vnp_Api');
+    let vnp_TmnCode = config.vnp_TmnCode;
+    let secretKey = config.vnp_HashSecret;
+    let vnp_Api = config.vnp_Api;
 
     let vnp_TxnRef = req.body.orderId;
     let vnp_TransactionDate = req.body.transDate;
-    let vnp_Amount = req.body.amount * 100;
+    let vnp_Amount = req.body.amount;
     let vnp_TransactionType = req.body.transType;
     let vnp_CreateBy = req.body.user;
 
@@ -269,7 +281,8 @@ router.post('/refund', function (req, res, next) {
 
     let data = vnp_RequestId + "|" + vnp_Version + "|" + vnp_Command + "|" + vnp_TmnCode + "|" + vnp_TransactionType + "|" + vnp_TxnRef + "|" + vnp_Amount + "|" + vnp_TransactionNo + "|" + vnp_TransactionDate + "|" + vnp_CreateBy + "|" + vnp_CreateDate + "|" + vnp_IpAddr + "|" + vnp_OrderInfo;
     let hmac = crypto.createHmac("sha512", secretKey);
-    let vnp_SecureHash = hmac.update(new Buffer(data, 'utf-8')).digest("hex");
+
+    let vnp_SecureHash = hmac.update(Buffer.from(data, 'utf-8')).digest("hex");
 
     let dataObj = {
         'vnp_RequestId': vnp_RequestId,
@@ -294,7 +307,12 @@ router.post('/refund', function (req, res, next) {
         json: true,
         body: dataObj
     }, function (error, response, body) {
-        console.log(response);
+        console.log(body)
+        if (body.vnp_ResponseCode === '00') {
+            res.json({message: 'Hoàn tiền thành công'})
+          } else {
+            res.json({message: 'Hoàn tiền thất bại'})
+          }
     });
 
 });

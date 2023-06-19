@@ -8,10 +8,10 @@ block content
         form(action='refund', method='POST')
             div.form-group
                 label Mã giao dịch (vnp_TxnRef):
-                input.form-control(name='orderId')
+                input.form-control(name='orderId', value=codeBill)
             div.form-group
                 label Số tiền hoàn:
-                input.form-control(name='amount')
+                input.form-control(name='amount', value=price)
             div.form-group
                 label Kiểu hoàn tiền (vnp_TransactionType):
                 select.form-control(name='transType')
@@ -19,9 +19,9 @@ block content
                     option(value='03') Hoàn một phần
             div.form-group
                 label Thời gian tạo giao dịch (vnp_TransactionDate)
-                input.form-control(name='transDate', placeholder='yyyyMMddHHmmss')
+                input.form-control(name='transDate', placeholder='yyyyMMddHHmmss', value=date)
             div.form-group
                 label User thực hiện hoàn (vnp_CreateBy)
-                input.form-control(name='user')
+                input.form-control(name='user', value="Staff")
             button.btn.btn-default(type='submit') Refund
     p&nbsp;

@@ -1,13 +1,13 @@
 const addTicketHistory = async (req, res) => {
   try {
-    const { totalQuantity, totalPrice, visitDate, userId } = req.body;
+    const { totalQuantity, totalPrice, visitDate, userId, codeBill } = req.body;
 
     const sql = `
-        INSERT INTO ticket_history (total_quantity, total_price, visit_date, user_id)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO ticket_history (total_quantity, total_price, visit_date, user_id, codeBill)
+        VALUES (?, ?, ?, ?, ?)
       `;
 
-    const values = [totalQuantity, totalPrice, visitDate, userId];
+    const values = [totalQuantity, totalPrice, visitDate, userId, codeBill];
 
     const [result] = await req.pool.query(sql, values);
 
@@ -147,6 +147,17 @@ const getTicketHistoryDataByIdUser = async (req, res) => {
       const [billResult] = await req.pool.query(billQuery, userId);
       bills = billResult;
     }
+    else if (limit === 2) {
+      // Lấy thông tin tất cả các bill
+      const billQuery = `
+              SELECT *
+              FROM ticket_history
+              WHERE isCancel IS NOT NULL
+              ORDER BY created_at DESC
+            `;
+      const [billResult] = await req.pool.query(billQuery);
+      bills = billResult;
+    }
     else {
       // Lấy thông tin tất cả các bill
       const billQuery = `
@@ -196,7 +207,7 @@ const getTicketHistoryDataByIdUser = async (req, res) => {
 
         let employer = []
 
-        if (limit === 10) {
+        if (limit === 10 || limit === 2) {
           const [employerResult] = await req.pool.query(employerQuery, [bill.user_id]);
           employer = employerResult;
         }
@@ -511,6 +522,7 @@ const getTicketListByDate2 = async (req, res) => {
 
     // Chuyển đổi ngày thành đúng định dạng
     const formattedDate = new Date(currentPageDate).toISOString().split('T')[0];
+    console.log(formattedDate)
 
     // Lấy danh sách hoá đơn đã qua ngày tham quan
     const historyQuery = `
@@ -578,9 +590,93 @@ const getTicketListByDate2 = async (req, res) => {
   }
 };
 
+const checkAndUpdateBill = async (req, res) => {
+  try {
+    const { idBill, totalAmount, totalPrice, date, userId } = req.body;
+
+    const currentDate = new Date().toISOString().slice(0, 10);
+
+    // Kiểm tra ngày không hợp lệ
+    if (date !== currentDate) {
+      res.json({ success: false, message: "Ngày không hợp lệ" });
+      return;
+    }
+
+    const sqlSelect = `
+        SELECT * FROM ticket_history
+        WHERE id = ? AND total_quantity = ? AND total_price = ? AND DATE(visit_date) = ? AND user_id = ?
+    `;
+
+    const selectValues = [idBill, totalAmount, totalPrice, date, userId];
+
+    const [selectResult] = await req.pool.query(sqlSelect, selectValues);
+
+    if (selectResult.length > 0) {
+      const sqlUpdate = `
+          UPDATE ticket_history
+          SET status = 1
+          WHERE id = ?
+      `;
+
+      const updateValues = [idBill];
+
+      await req.pool.query(sqlUpdate, updateValues);
+
+      res.json({ success: true, message: "Bill updated successfully" });
+    } else {
+      res.json({ success: false, message: "Dữ liệu không tồn tại" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+
+const updateIsCancel = async (req, res) => {
+  try {
+    const {ticketId, isCancelValue} = req.body
+
+    const sql = `
+      UPDATE ticket_history
+      SET isCancel = ?
+      WHERE id = ?
+    `;
+
+    const values = [isCancelValue, ticketId];
+
+    await req.pool.query(sql, values);
+
+    res.json({ success: true, message: "Update success" });
+  } catch (error) {
+    console.log(error);
+    throw new Error('Failed to update isCancel');
+  }
+};
+
+const updateStatustoTicket = async (req, res) => {
+  try {
+    const { ticketHistoryId } = req.params;
+
+    const sql = `
+      UPDATE ticket_history
+      SET status = 2, isCancel = NULL
+      WHERE id = ?
+    `;
+
+    const values = [ticketHistoryId];
+
+    await req.pool.query(sql, values);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+};
+
 module.exports = {
-  addTicket, addService, addTicketHistory,
-  getTicketHistoryData, getAllTicketCategories,
+  addTicket, addService, addTicketHistory, checkAndUpdateBill,
+  getTicketHistoryData, getAllTicketCategories, updateIsCancel,
   getAllServiceCategories, updateQRCode, getTicketHistoryDataByIdUser,
-  getRevenueStatistics, getRevenueByMonth, getTicketListByDate, getTicketListByDate2
+  getRevenueStatistics, getRevenueByMonth, getTicketListByDate, getTicketListByDate2, updateStatustoTicket
 };
